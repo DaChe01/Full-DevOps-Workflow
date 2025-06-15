@@ -8,9 +8,7 @@
 
   tasks:
     - name: Verify Kubernetes cluster is ready
-      shell: |
-        eval $(minikube -p minikube docker-env)
-        kubectl cluster-info
+      shell: kubectl cluster-info
       register: k8s_status
       changed_when: false
       ignore_errors: yes
@@ -47,23 +45,17 @@
         mode: '0644'
 
     - name: Apply deployment.yaml
-      shell: |
-        eval $(minikube -p minikube docker-env)
-        kubectl apply -f {{ remote_k8s_dir }}/deployment.yaml
+      shell: kubectl apply -f {{ remote_k8s_dir }}/deployment.yaml
       environment:
         HOME: "/home/{{ ansible_user }}"
 
     - name: Apply service.yaml
-      shell: |
-        eval $(minikube -p minikube docker-env)
-        kubectl apply -f {{ remote_k8s_dir }}/service.yaml
+      shell: kubectl apply -f {{ remote_k8s_dir }}/service.yaml
       environment:
         HOME: "/home/{{ ansible_user }}"
 
     - name: Wait for Deployment to be ready
-      shell: |
-        eval $(minikube -p minikube docker-env)
-        kubectl rollout status deployment/simon-game-deployment
+      shell: kubectl rollout status deployment/simon-game-deployment
       register: rollout_status
       retries: 20
       delay: 5
@@ -72,9 +64,7 @@
         HOME: "/home/{{ ansible_user }}"
 
     - name: Get Service URL
-      shell: |
-        eval $(minikube -p minikube docker-env)
-        minikube service simon-game-service --url
+      shell: minikube service simon-game-service --url
       register: service_url
       changed_when: false
       environment:
