@@ -1,0 +1,12 @@
+# Ignore everything except the app folder
+*
+
+# But include app/ for Docker build
+!app/
+!app/**/*
+
+# Inside app, ignore unnecessary files
+app/*.log
+app/node_modules/
+app/.DS_Store
+app/.env

@@ -1,0 +1,39 @@
+# Node (if any tooling added later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System
+.DS_Store
+Thumbs.db
+
+# VSCode and IDEs
+.vscode/
+.idea/
+
+# Environment files
+.env
+*.pem
+
+# Logs
+logs/
+*.log
+
+# Docker
+*.tar
+*.pid
+
+# Python virtual env (if used for scripts)
+venv/
+__pycache__/
+
+# Build
+dist/
+build/
+
+# Kubernetes configs (optional, if dynamic)
+k8s/*.yaml.backup
+
+# Jenkins workspace (optional)
+jenkins_home/
