@@ -10,7 +10,7 @@ pipeline {
 
         stage('Deploy to K8s') {
             steps {
-                sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy_k8s.yaml'
+                sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy.yaml'
             }
         }
     }
