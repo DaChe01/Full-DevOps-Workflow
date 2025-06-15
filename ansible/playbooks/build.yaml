@@ -1,0 +1,54 @@
+---
+- name: Build Docker image for simon-game inside Minikube's Docker
+  hosts: remote
+  become: true
+  vars:
+    app_src: "../../simon-game"
+    app_dest: "/home/{{ ansible_user }}/task3/simon-game"
+    image_name: "simon-game:v1"
+
+  tasks:
+    - name: Ensure Docker is running
+      shell: docker info
+      register: docker_status
+      changed_when: false
+      failed_when: docker_status.rc != 0
+
+    - name: Ensure destination directory exists
+      file:
+        path: "{{ app_dest }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Copy app code to remote server
+      synchronize:
+        src: "{{ app_src }}/"
+        dest: "{{ app_dest }}/"
+        rsync_opts:
+          - "--delete"
+      delegate_to: localhost
+      become: false
+
+    - name: Build Docker image inside Minikube
+      shell: |
+        eval $(minikube docker-env)
+        docker build -t {{ image_name }} .
+      args:
+        chdir: "{{ app_dest }}"
+        executable: /bin/bash
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+
+    - name: (Optional) Show Docker images for debug
+      shell: |
+        eval $(minikube docker-env)
+        docker images | grep simon
+      register: image_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display image info
+      debug:
+        var: image_check.stdout

@@ -1,0 +1,85 @@
+---
+- name: Deploy Application to Kubernetes
+  hosts: remote
+  become: true
+  vars:
+    remote_k8s_dir: "/home/{{ ansible_user }}/task3"
+    # app_name: "simon-game"
+
+  tasks:
+    - name: Verify Kubernetes cluster is ready
+      shell: |
+        eval $(minikube -p minikube docker-env)
+        kubectl cluster-info
+      register: k8s_status
+      changed_when: false
+      ignore_errors: yes
+      environment:
+        KUBECONFIG: "/home/{{ ansible_user }}/.kube/config"
+
+    - name: Fail if Kubernetes is not available
+      fail:
+        msg: "Kubernetes cluster is not ready. Run the install playbook first."
+      when: k8s_status.rc != 0
+
+    - name: Ensure Kubernetes manifest directory exists
+      file:
+        path: "{{ remote_k8s_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Copy deployment.yaml
+      copy:
+        src: "../../k8s/deployment.yaml"
+        dest: "{{ remote_k8s_dir }}/deployment.yaml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Copy service.yaml
+      copy:
+        src: "../../k8s/service.yaml"
+        dest: "{{ remote_k8s_dir }}/service.yaml"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0644'
+
+    - name: Apply deployment.yaml
+      shell: |
+        eval $(minikube -p minikube docker-env)
+        kubectl apply -f {{ remote_k8s_dir }}/deployment.yaml
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+
+    - name: Apply service.yaml
+      shell: |
+        eval $(minikube -p minikube docker-env)
+        kubectl apply -f {{ remote_k8s_dir }}/service.yaml
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+
+    - name: Wait for Deployment to be ready
+      shell: |
+        eval $(minikube -p minikube docker-env)
+        kubectl rollout status deployment/simon-game-deployment
+      register: rollout_status
+      retries: 20
+      delay: 5
+      until: rollout_status.rc == 0
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+
+    - name: Get Service URL
+      shell: |
+        eval $(minikube -p minikube docker-env)
+        minikube service simon-game-service --url
+      register: service_url
+      changed_when: false
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+
+    - name: Display Application URL
+      debug:
+        msg: "App running at: {{ service_url.stdout }}"
