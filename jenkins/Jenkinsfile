@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/build.yaml'
+            }
+        }
+
+        stage('Deploy to K8s') {
+            steps {
+                sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy_k8s.yaml'
+            }
+        }
+    }
+}
