@@ -25,7 +25,7 @@ simon-game/
 ├── ansible/
 │   ├── inventory.ini
 │   ├── playbooks/
-│   │   ├── install.yaml          # (Optional) Setup Docker, K8s, etc.
+│   │   ├── install.yaml          # Installs Docker, K8s, etc.
 │   │   ├── build.yaml            # Builds Docker image
 │   │   └── deploy.yaml           # Deploys app to Kubernetes
 ├── simon-game/
@@ -38,7 +38,8 @@ simon-game/
 │   ├── deployment.yaml
 │   └── service.yaml
 ├── jenkins/
-│   └── Jenkinsfile              # Jenkins pipeline definition
+│   ├── Jenkinsfile              # Jenkins pipeline definition
+│   └── Dockerfile               # Optional Jenkins environment setup
 ```
 
 ---
@@ -50,9 +51,10 @@ Git Push → Jenkins → Ansible → Docker → Kubernetes → Live App
 ```
 
 1. **Jenkins** detects code push and triggers pipeline
-2. **Ansible** builds Docker image from `app/`
-3. **Ansible** applies K8s manifests to deploy
-4. Application accessible via Minikube service
+2. **Ansible** runs `install.yaml` to setup environment (optional to keep or remove)
+3. **Ansible** builds Docker image from `simon-game/`
+4. **Ansible** applies K8s manifests to deploy
+5. Application accessible via Minikube service
 
 ---
 
@@ -73,25 +75,23 @@ cd simon-game
 
 ### 3. Ansible Requirements
 
-* Ensure passwordless SSH to remote machine
-* You can either:
+* Ensure passwordless SSH to remote machine is setup
+* Jenkins runs Ansible commands internally — nothing extra needed if pipeline runs successfully
 
-  * Manually install dependencies:
+> 🔧 The Jenkinsfile already includes `install.yaml`. You can remove that stage if your system is already configured.
 
-    ```bash
-    sudo apt install ansible docker.io kubectl
-    ```
-  * **OR** include the `install.yaml` playbook in your Jenkinsfile to automate installation during pipeline runs.
+### 4. Jenkins Environment Setup (Optional)
 
-> ✅ DevOps encourages full automation, so using `install.yaml` is preferred if you're setting up new machines or testing end-to-end automation.
+If you're setting up Jenkins in a Docker environment and want required tools pre-installed (like Ansible, rsync, openssh-client), you can use the included `jenkins/Dockerfile`:
 
-### 4. Kubernetes Setup
+```bash
+docker build -t custom-jenkins -f jenkins/Dockerfile .
+docker run -p 8080:8080 -v jenkins_home:/var/jenkins_home custom-jenkins
+```
 
-* Start Minikube:
+> ✅ Alternatively, you can install Ansible, rsync, and openssh manually if you're using native Jenkins or already have a configured Jenkins Docker image.
 
-  ```bash
-  minikube start
-  ```
+### 5. Access
 
 * Access the app:
 
@@ -101,39 +101,13 @@ cd simon-game
 
 ---
 
-## 💼 Jenkinsfile (Pipeline Script)
+## 💼 Jenkinsfile
 
-Place your Jenkinsfile in the root or inside `jenkins/` folder. This project already includes a working pipeline script in `jenkins/Jenkinsfile`, so there's no need to rewrite it here.
+Jenkinsfile Sample (already included in `jenkins/Jenkinsfile`).
 
-### 💡 Optional: Include `install.yaml`
-
-If your remote machine does **not** have Docker, Kubernetes, etc., pre-installed, you can add an extra stage to your Jenkinsfile:
-
-```groovy
-stage('Install Dependencies') {
-    steps {
-        sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/install.yaml'
-    }
-}
-```
-
-> ⚡ Use this only if your infrastructure needs initial setup. CI/CD typically assumes it's already configured.
-
-> 🐳 **Docker Note**: If you prefer complete automation, `install.yaml` will handle Docker installation too. So, you can skip installing it manually if you're including this playbook in your Jenkinsfile.
+Includes stages to install dependencies (via Ansible), build the Docker image, and deploy to Kubernetes.
 
 ---
-
-## 🐳 Docker Commands (Dev Only)
-
-> ⚠️ These commands are for local testing or debugging only. In production or CI/CD, Docker is handled by `ansible/playbooks/build.yaml`.
-
-```bash
-# Build manually (alternative to build.yaml)
-docker build -t simon-game:latest ./simon-game
-
-# Run locally
-docker run -p 8080:80 simon-game
-```
 
 ## 📜 License
 
