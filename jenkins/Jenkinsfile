@@ -2,6 +2,12 @@ pipeline {
     agent any
 
     stages {
+        stage('Install Dependencies') {
+            steps {
+                sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/install.yaml'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/playbooks/build.yaml'
