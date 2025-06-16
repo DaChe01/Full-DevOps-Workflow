@@ -84,3 +84,10 @@
         dest: /usr/local/bin/minikube
         mode: '0755'
       when: not minikube_check.stat.exists
+    - name: Start Minikube with Docker driver
+      become_user: "{{ ansible_user }}"
+      shell: |
+        minikube start --driver=docker
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"
+
