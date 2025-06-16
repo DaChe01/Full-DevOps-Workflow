@@ -93,11 +93,25 @@ docker run -p 8080:8080 -v jenkins_home:/var/jenkins_home custom-jenkins
 
 ### 5. Access
 
-* Access the app:
+ * Access the app via Minikube:
 
   ```bash
   minikube service simon-game-service
   ```
+
+* Or forward the Kubernetes service port manually if you want to access from a different device or remote system:
+
+  ```bash
+  kubectl port-forward service/simon-game-service 9090:80
+  ```
+
+  Then, on your local machine:
+
+  ```bash
+  ssh -L 9090:localhost:9090 your-user@your-server-ip
+  ```
+
+  Open `http://localhost:9090` in your browser.
 
 ---
 
